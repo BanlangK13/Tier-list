@@ -54,15 +54,10 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   object-fit:cover;pointer-events:none;-webkit-user-drag:none}
 .song .name{font-size:12px;font-weight:500;line-height:1.3;margin-top:5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .song .artist{font-size:11px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.song.white{width:156px;min-height:var(--card);padding:12px;border-radius:10px;background:#fff;color:#17141c;display:flex;flex-direction:column;justify-content:center;gap:2px}
-.song.white .name{font-size:14px;font-weight:600;margin:0;-webkit-line-clamp:3}
-.song.white .artist{font-size:12px;color:#5d5568;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .song.dragging{opacity:.25}
-.ghost{position:fixed;z-index:50;pointer-events:none;width:156px;min-height:var(--card);padding:12px 12px 14px;border-radius:10px;
-  background:#fff;color:#17141c;display:flex;flex-direction:column;justify-content:center;gap:2px;
-  transform:rotate(-3deg) scale(1.04);filter:drop-shadow(0 12px 18px rgba(0,0,0,.55))}
-.ghost .g-name{font-size:14px;font-weight:600;line-height:1.3;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.ghost .g-artist{font-size:12px;color:#5d5568;line-height:1.3;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ghost{position:fixed;z-index:50;pointer-events:none;width:var(--card);transform:rotate(-3deg) scale(1.06);
+  filter:drop-shadow(0 12px 18px rgba(0,0,0,.55))}
+.ghost .name,.ghost .artist{display:none}
 .marker{width:4px;height:var(--card);border-radius:2px;background:var(--accent);flex:0 0 auto;align-self:flex-start;margin:0 -2px}
 .foot{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;align-items:center}
 .foot small{color:var(--dim);font-size:12.5px}
@@ -75,8 +70,6 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .zone{padding:8px;gap:6px}
   .clock{text-align:left}
   .song .name{font-size:11px}
-  .song.white{width:132px}
-  .song.white .name{font-size:13px}
 }
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
 </style>
@@ -171,18 +164,10 @@ function save(){ try { localStorage.setItem(key(viewDay), JSON.stringify(state))
 const $ = s => document.querySelector(s);
 const tiersEl = $("#tiers"), poolEl = $("#pool");
 
-function songEl(id, white){
+function songEl(id){
   const [name, artist, img] = SONGS[id];
   const el = document.createElement("div");
   el.className = "song"; el.dataset.id = id; el.title = name + " — " + artist;
-  if(white){
-    el.classList.add("white");
-    const n = document.createElement("div"); n.className = "name"; n.textContent = name;
-    const a = document.createElement("div"); a.className = "artist"; a.textContent = artist;
-    el.append(n, a);
-    el.addEventListener("pointerdown", onDown);
-    return el;
-  }
   const im = document.createElement("img");
   im.className = "cover"; im.alt = ""; im.draggable = false; im.loading = "lazy";
   im.src = "https://i.scdn.co/image/" + img;
@@ -207,7 +192,7 @@ function render(){
   poolEl.innerHTML = "";
   poolEl.className = "pool";
   poolEl.style.display = "flex"; poolEl.style.flexWrap = "wrap"; poolEl.style.gap = "8px"; poolEl.style.padding = "10px"; poolEl.style.alignContent = "flex-start";
-  state.pool.forEach(id => poolEl.appendChild(songEl(id, true)));
+  state.pool.forEach(id => poolEl.appendChild(songEl(id)));
   if(!state.pool.length){
     poolEl.classList.add("done"); poolEl.textContent = "จัดครบ 10 เพลงแล้ว";
   }
@@ -259,12 +244,9 @@ function onDown(e){
 function startDrag(e){
   const d = dragging, r = d.el.getBoundingClientRect();
   d.active = true; d.ox = e.clientX - r.left; d.oy = e.clientY - r.top;
-  const g = document.createElement("div"); g.className = "ghost";
-  const gn = document.createElement("div"); gn.className = "g-name"; gn.textContent = SONGS[d.id][0];
-  const ga = document.createElement("div"); ga.className = "g-artist"; ga.textContent = SONGS[d.id][1];
-  g.append(gn, ga);
+  const g = d.el.cloneNode(true); g.classList.add("ghost"); g.classList.remove("dragging");
+  g.style.width = r.width + "px";
   document.body.appendChild(g); d.ghost = g;
-  d.ox = g.offsetWidth / 2; d.oy = g.offsetHeight / 2;
   d.marker = document.createElement("div"); d.marker.className = "marker";
   d.el.classList.add("dragging");
 }
